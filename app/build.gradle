@@ -7,7 +7,7 @@ android {
     compileSdk 30
 
     defaultConfig {
-        applicationId "me.izzp.upnp.portmapping"
+        applicationId "me.izzp.upnp.portmapping.demo"
         minSdk 23
         targetSdk 30
         versionCode 1

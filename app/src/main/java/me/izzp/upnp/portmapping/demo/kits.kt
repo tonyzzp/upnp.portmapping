@@ -1,4 +1,4 @@
-package me.izzp.upnp.portmapping
+package me.izzp.upnp.portmapping.demo
 
 import android.app.Activity
 import androidx.appcompat.app.AlertDialog
