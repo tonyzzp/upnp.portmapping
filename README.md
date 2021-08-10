@@ -2,6 +2,22 @@
 upnp portmapping for android
 
 
+使用方式
+```gradle
+allprojects {
+  repositories {
+    ...
+    maven { url 'https://jitpack.io' }
+  }
+}
+```
+
+```gradle
+dependencies {
+  implementation 'com.github.tonyzzp:upnp.portmapping:1.0'
+}
+```
+
 
 查找upnp网关地址
 ```kotlin
