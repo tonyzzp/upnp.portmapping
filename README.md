@@ -2,6 +2,7 @@
 upnp 端口映射 for android
 
 
+<!--
 使用方式
 ```gradle
 allprojects {
@@ -11,6 +12,7 @@ allprojects {
   }
 }
 ```
+-->
 
 ```gradle
 dependencies {
