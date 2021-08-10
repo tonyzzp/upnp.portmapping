@@ -4,8 +4,10 @@ import android.os.Bundle
 import android.view.View
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
-import me.izzp.upnp.portmapping.*
-import me.izzp.upnp.portmapping.R
+import me.izzp.upnp.portmapping.PortMapping
+import me.izzp.upnp.portmapping.Upnp
+import me.izzp.upnp.portmapping.Utils
+import me.izzp.upnp.portmapping.defaultIP4Address
 import java.net.NetworkInterface
 
 class MainActivity : AppCompatActivity() {
