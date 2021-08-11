@@ -1,6 +1,5 @@
 package me.izzp.upnp.portmapping
 
-import android.content.Context
 import org.w3c.dom.Element
 import javax.xml.parsers.DocumentBuilderFactory
 import kotlin.concurrent.thread
@@ -24,17 +23,17 @@ object PortMapping {
         exist,
     }
 
-    private fun request(context: Context, f: VoidFunction) {
+    private fun request(f: VoidFunction) {
         if (Upnp.gateway == "") {
-            init(context)
+            init()
             tasks.add(f)
         } else {
             f()
         }
     }
 
-    fun query(context: Context, externalPort: Int, protocol: String, cb: (Info?) -> Unit) {
-        request(context) {
+    fun query(externalPort: Int, protocol: String, cb: (Info?) -> Unit) {
+        request {
             thread {
                 val response = Http.sendUPNPRequest(
                     Upnp.gateway, "GetSpecificPortMappingEntry", mapOf(
@@ -66,7 +65,6 @@ object PortMapping {
     }
 
     fun add(
-        context: Context,
         externalPort: Int,
         protocol: String,
         internalHost: String,
@@ -74,7 +72,7 @@ object PortMapping {
         desc: String,
         cb: (AddPortMappingResult) -> Unit
     ) {
-        request(context) {
+        request {
             thread {
                 val response = Http.sendUPNPRequest(
                     Upnp.gateway, "AddPortMapping", mapOf(
@@ -103,12 +101,11 @@ object PortMapping {
     }
 
     fun del(
-        context: Context,
         externalPort: Int,
         protocol: String,
         cb: (success: Boolean) -> Unit
     ) {
-        request(context) {
+        request {
             thread {
                 val response = Http.sendUPNPRequest(
                     Upnp.gateway, "DeletePortMapping", mapOf(
@@ -138,7 +135,7 @@ object PortMapping {
         }
     }
 
-    private fun init(context: Context) {
+    private fun init() {
         thread {
             Upnp.requestGateway {
                 if (it != "") {

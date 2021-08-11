@@ -72,20 +72,20 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun onQueryClick(view: View) {
-        PortMapping.query(this, 34567, "UDP") {
+        PortMapping.query(34567, "UDP") {
             runOnUiThread { alert(it?.toString() ?: "") }
         }
     }
 
     fun onAddPortMappingClick(view: View) {
         val ip = Utils.findDefaultNetworkInterface()?.defaultIP4Address()?.hostAddress ?: ""
-        PortMapping.add(this, 34567, "UDP", ip, 34567, "test 34567") {
+        PortMapping.add(34567, "UDP", ip, 34567, "test 34567") {
             runOnUiThread { alert(it.toString()) }
         }
     }
 
     fun onRemovePortMappingClick(view: View) {
-        PortMapping.del(this, 34567, "UDP") {
+        PortMapping.del(34567, "UDP") {
             runOnUiThread { alert(it.toString()) }
         }
     }
