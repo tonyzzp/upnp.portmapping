@@ -2,7 +2,6 @@
 upnp 端口映射 for android
 
 
-<!--
 使用方式
 ```gradle
 allprojects {
@@ -18,7 +17,6 @@ dependencies {
   implementation 'com.github.tonyzzp:upnp.portmapping:1.1'
 }
 ```
--->
 
 
 查找upnp网关地址
