@@ -1,18 +1,16 @@
 package me.izzp.upnp.portmapping
 
-import android.content.Context
-
 typealias VoidFunction = () -> Unit
 
 object Upnp {
 
     var gateway = ""
 
-    fun requestGateway(context: Context, cb: (String) -> Unit) {
+    fun requestGateway(cb: (String) -> Unit) {
         if (gateway != "") {
             cb(gateway)
         } else {
-            Udp.requestGateway(context) {
+            Udp.requestGateway {
                 gateway = it
                 cb(it)
             }

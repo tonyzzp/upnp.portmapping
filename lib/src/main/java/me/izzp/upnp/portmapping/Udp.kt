@@ -1,73 +1,20 @@
 package me.izzp.upnp.portmapping
 
-import android.content.Context
-import android.net.wifi.WifiManager
 import org.w3c.dom.Element
 import java.net.*
 import java.util.*
 import javax.xml.parsers.DocumentBuilderFactory
-import kotlin.concurrent.schedule
 import kotlin.concurrent.thread
 
 internal const val ST_GATEWAY = "urn:schemas-upnp-org:device:InternetGatewayDevice:1"
 internal const val ST_ROOTDEVICE = "upnp:rootdevice"
-
-internal const val MSG_MSEARCH = """M-SEARCH * HTTP/1.1
-HOST: 239.255.255.250:1900
-ST: urn:schemas-upnp-org:device:InternetGatewayDevice:1
-MAN: "ssdp:discover"
-MX: 1
-"""
+internal const val MSG_MSEARCH =
+    "M-SEARCH * HTTP/1.1\r\nhost: 239.255.255.250:1900\r\nman: \"ssdp:discover\"\r\nst: upnp:rootdevice\r\nmx: 1\r\n\r\n"
 
 internal object Udp {
 
-    private var socket: MulticastSocket? = null
-    private var upnpUrl = ""
-    private var timer: Timer? = null
-    private var lock: WifiManager.MulticastLock? = null
+    private var socket: DatagramSocket? = null
     private var cb: ((String) -> Unit)? = null
-
-    private fun listen() {
-        if (socket != null) {
-            return
-        }
-        socket = MulticastSocket(1900)
-        socket!!.joinGroup(InetAddress.getByName("239.255.255.250"))
-        val s = socket!!
-        thread {
-            println("listen.run")
-            val bytes = ByteArray(1024 * 10)
-            val packet = DatagramPacket(bytes, bytes.size)
-            while (true) {
-                try {
-                    s.receive(packet)
-                } catch (e: Exception) {
-                    s.close()
-                    socket = null
-                    break
-                }
-                val str = packet.data.decodeToString(packet.offset, packet.length)
-                println("------------")
-                println(str)
-                val lines = str.split("\n").map { it.trim() }
-                if (!lines[0].startsWith("HTTP/1.1") && !lines[0].startsWith("NOTIFY")) {
-                    continue
-                }
-                val headers = parseHeaders(lines)
-                if (headers["st"] == ST_GATEWAY || headers["st"] == ST_ROOTDEVICE || headers["nt"] ==
-                    ST_ROOTDEVICE
-                ) {
-                    val url = headers["location"]
-                    if (url != null && url.isNotBlank()) {
-                        upnpUrl = url
-                        println("upnp:$upnpUrl")
-                        onUpnpResolved()
-                        break
-                    }
-                }
-            }
-        }
-    }
 
     private fun parseHeaders(lines: List<String>): Map<String, String> {
         val map = mutableMapOf<String, String>()
@@ -82,23 +29,11 @@ internal object Udp {
         return map
     }
 
-    private fun send() {
-        println("send")
-        val bytes = MSG_MSEARCH.toByteArray()
-        val packet =
-            DatagramPacket(bytes, 0, bytes.size, InetSocketAddress("239.255.255.250", 1900))
-        socket?.send(packet)
-    }
-
-    private fun onUpnpResolved() {
-        lock?.release()
-        timer?.cancel()
-        timer = null
-        socket?.close()
+    private fun onUpnpResolved(upnpUrl: String) {
         socket = null
         val content = Http.get(upnpUrl)
         if (content == "") {
-            cb?.invoke("")
+            onGatewalResolved("")
             return
         }
         val doc =
@@ -134,36 +69,46 @@ internal object Udp {
     }
 
     private fun onGatewalResolved(gateway: String) {
+        socket = null
         cb?.invoke(gateway)
         cb = null
     }
 
-    fun requestGateway(context: Context, cb: (String) -> Unit) {
-        if (timer != null) {
-            return
-        }
-        val mgr = context.applicationContext.getSystemService(Context.WIFI_SERVICE) as WifiManager
-        lock = mgr.createMulticastLock("upnp")
-        lock?.acquire()
+    fun requestGateway(cb: (String) -> Unit) {
         this.cb = cb
-        listen()
-        var times = 0
-        timer = Timer()
-        timer?.schedule(0L, 5000L) {
-            times++
-            if (times > 20) {
-                cancel()
-                cb.invoke("")
-                this@Udp.cb = null
-            } else {
-                send()
+        thread {
+            val socket = DatagramSocket()
+            this.socket = socket
+            val bytes = MSG_MSEARCH.toByteArray()
+            val packet =
+                DatagramPacket(bytes, bytes.size, InetSocketAddress("239.255.255.250", 1900))
+            try {
+                socket.send(packet)
+            } catch (e: Exception) {
+                e.printStackTrace()
+                socket.close()
+                onGatewalResolved("")
+                return@thread
             }
+            val readPacket = DatagramPacket(ByteArray(10240), 10240)
+            try {
+                socket.receive(readPacket)
+            } catch (e: Exception) {
+                e.printStackTrace()
+                socket.close()
+                onGatewalResolved("")
+                return@thread
+            }
+            val content = readPacket.data.decodeToString(readPacket.offset, readPacket.length)
+            val headers = parseHeaders(content.split("\n"))
+            val location = headers["location"]
+            socket.close()
+            onUpnpResolved(location ?: "")
         }
     }
 
     fun cancel() {
-        timer?.cancel()
-        timer = null
+        cb = null
         socket?.close()
         socket = null
     }

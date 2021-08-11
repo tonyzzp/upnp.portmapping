@@ -140,7 +140,7 @@ object PortMapping {
 
     private fun init(context: Context) {
         thread {
-            Upnp.requestGateway(context) {
+            Upnp.requestGateway {
                 if (it != "") {
                     Upnp.gateway = it
                     onInit()

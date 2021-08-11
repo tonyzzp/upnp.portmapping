@@ -15,7 +15,6 @@ __PARAMS__
 
 internal object Http {
 
-
     data class Response(val code: Int, val body: String)
 
     fun get(url: String): String = try {

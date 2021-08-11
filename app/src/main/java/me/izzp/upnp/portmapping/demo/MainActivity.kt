@@ -25,7 +25,7 @@ class MainActivity : AppCompatActivity() {
 
     override fun onDestroy() {
         super.onDestroy()
-        Upnp.cancel()
+        Upnp.clear()
     }
 
     fun onNetworkInterfaceClick(view: View) {
@@ -58,7 +58,7 @@ class MainActivity : AppCompatActivity() {
     fun onRequestGatewayClick(view: View) {
         gateway = ""
         tv.text = "gateway: 查找中"
-        Upnp.requestGateway(this) {
+        Upnp.requestGateway {
             gateway = it
             sp.edit().putString("gateway", gateway).apply()
             runOnUiThread {
