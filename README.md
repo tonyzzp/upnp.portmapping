@@ -21,7 +21,7 @@ dependencies {
 
 查找upnp网关地址
 ```kotlin
-Upnp.requestGateway(context){gateway->
+Upnp.requestGateway{gateway->
   println(gateway)
 }
 ```
@@ -29,7 +29,7 @@ Upnp.requestGateway(context){gateway->
 
 查找已经存在的端口映射
 ```kotlin
-PortMapping.query(context, 34567, "UDP"){result->
+PortMapping.query(34567, "UDP"){result->
   println(result)
 }
 ```
@@ -37,7 +37,7 @@ PortMapping.query(context, 34567, "UDP"){result->
 
 增加映射
 ```kotlin
-PortMapping.add(context, externalPort, "UDP", internalHostIP, internalPort, "DESC"){result->
+PortMapping.add(externalPort, "UDP", internalHostIP, internalPort, "DESC"){result->
   println(result)
 }
 ```
@@ -45,7 +45,7 @@ PortMapping.add(context, externalPort, "UDP", internalHostIP, internalPort, "DES
 
 删除映射
 ```kotlin
-PortMapping.del(context, externalPort, UDP_or_TCP){result->
+PortMapping.del(externalPort, UDP_or_TCP){result->
   println(result)
 }
 ```
