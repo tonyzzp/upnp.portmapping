@@ -1,4 +1,4 @@
-package me.izzp.upnp.portmapping
+package com.github.zzp.upnp.portmapping
 
 import org.w3c.dom.Element
 import javax.xml.parsers.DocumentBuilderFactory
@@ -33,10 +33,12 @@ object PortMapping {
     }
 
     fun query(externalPort: Int, protocol: String, cb: (Info?) -> Unit) {
+        Logger.log("query $externalPort $protocol")
         request {
             thread {
                 val response = Http.sendUPNPRequest(
                     Upnp.gateway, "GetSpecificPortMappingEntry", mapOf(
+                        "NewRemoteHost" to "",
                         "NewExternalPort" to externalPort.toString(),
                         "NewProtocol" to protocol,
                     )
@@ -76,6 +78,7 @@ object PortMapping {
             thread {
                 val response = Http.sendUPNPRequest(
                     Upnp.gateway, "AddPortMapping", mapOf(
+                        "NewRemoteHost" to "",
                         "NewExternalPort" to externalPort.toString(),
                         "NewProtocol" to protocol,
                         "NewInternalPort" to internalPort.toString(),
@@ -109,6 +112,7 @@ object PortMapping {
             thread {
                 val response = Http.sendUPNPRequest(
                     Upnp.gateway, "DeletePortMapping", mapOf(
+                        "NewRemoteHost" to "0",
                         "NewExternalPort" to externalPort.toString(),
                         "NewProtocol" to protocol,
                     )

@@ -1,4 +1,4 @@
-package me.izzp.upnp.portmapping
+package com.github.zzp.upnp.portmapping
 
 import java.net.HttpURLConnection
 import java.net.URL
@@ -18,16 +18,23 @@ internal object Http {
     data class Response(val code: Int, val body: String)
 
     fun get(url: String): String = try {
+        Logger.log("Http.get:$url")
         (URL(url).openConnection() as HttpURLConnection).let { conn ->
             conn.requestMethod = "GET"
-            conn.inputStream.readBytes().decodeToString()
+            val result = conn.inputStream.readBytes().decodeToString()
+            Logger.log(result)
+            result
         }
     } catch (e: Exception) {
+        Logger.log(e)
         e.printStackTrace()
         ""
     }
 
     fun post(url: String, headers: Map<String, String>, body: String): Response = try {
+        Logger.log("Http.post: $url")
+        Logger.log(headers)
+        Logger.log(body)
         (URL(url).openConnection() as HttpURLConnection).let { conn ->
             conn.requestMethod = "POST"
             headers.forEach {
@@ -42,7 +49,9 @@ internal object Http {
             } else {
                 conn.errorStream
             }
-            Response(code, stream.readBytes().decodeToString())
+            val result = stream.readBytes().decodeToString()
+            Logger.log(result)
+            Response(code, result)
         }
     } catch (e: Exception) {
         Response(0, "")

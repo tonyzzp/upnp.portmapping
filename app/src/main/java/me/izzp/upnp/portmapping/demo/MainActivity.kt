@@ -1,13 +1,16 @@
 package me.izzp.upnp.portmapping.demo
 
 import android.os.Bundle
+import android.view.Menu
+import android.view.MenuItem
 import android.view.View
 import android.widget.TextView
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
-import me.izzp.upnp.portmapping.PortMapping
-import me.izzp.upnp.portmapping.Upnp
-import me.izzp.upnp.portmapping.Utils
-import me.izzp.upnp.portmapping.defaultIP4Address
+import com.github.zzp.upnp.portmapping.PortMapping
+import com.github.zzp.upnp.portmapping.Upnp
+import com.github.zzp.upnp.portmapping.Utils
+import com.github.zzp.upnp.portmapping.defaultIP4Address
 import java.net.NetworkInterface
 
 class MainActivity : AppCompatActivity() {
@@ -21,11 +24,31 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
         gateway = sp.getString("gateway", "")!!
         tv.text = "gateway: $gateway"
+        Upnp.enableLog(true)
+        Upnp.clearLog()
     }
 
     override fun onDestroy() {
         super.onDestroy()
         Upnp.clear()
+    }
+
+    override fun onCreateOptionsMenu(menu: Menu): Boolean {
+        menuInflater.inflate(R.menu.main, menu)
+        return true
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        when (item.itemId) {
+            R.id.mi_log -> {
+                AlertDialog.Builder(this)
+                    .setMessage(Upnp.logs())
+                    .setPositiveButton("ok", null)
+                    .show()
+                return true
+            }
+        }
+        return super.onOptionsItemSelected(item)
     }
 
     fun onNetworkInterfaceClick(view: View) {

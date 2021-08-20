@@ -1,4 +1,4 @@
-package me.izzp.upnp.portmapping
+package com.github.zzp.upnp.portmapping
 
 typealias VoidFunction = () -> Unit
 
@@ -16,6 +16,16 @@ object Upnp {
             }
         }
     }
+
+    fun enableLog(enable: Boolean) {
+        Logger.enable = enable
+    }
+
+    fun clearLog() {
+        Logger.clear()
+    }
+
+    fun logs() = Logger.getAll()
 
     fun cancel() {
         Udp.cancel()

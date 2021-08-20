@@ -1,4 +1,4 @@
-package me.izzp.upnp.portmapping
+package com.github.zzp.upnp.portmapping
 
 import org.w3c.dom.Element
 import java.net.*
@@ -30,6 +30,7 @@ internal object Udp {
     }
 
     private fun onUpnpResolved(upnpUrl: String) {
+        Logger.log("onUpnpResolved:$upnpUrl")
         socket = null
         val content = Http.get(upnpUrl)
         if (content == "") {
@@ -46,8 +47,6 @@ internal object Udp {
                     .item(0).textContent == "urn:schemas-upnp-org:service:WANIPConnection:1"
             ) {
                 val path = service.getElementsByTagName("controlURL").item(0).textContent
-//                val host =
-//                    doc.documentElement.getElementsByTagName("presentationURL").item(0).textContent
                 val host = URL(upnpUrl).let {
                     "${it.protocol}://${it.host}:${it.port}"
                 }
@@ -61,7 +60,6 @@ internal object Udp {
                 } else {
                     gateway = "$host/$path"
                 }
-                println(gateway)
                 onGatewalResolved(gateway)
                 break
             }
@@ -69,23 +67,37 @@ internal object Udp {
     }
 
     private fun onGatewalResolved(gateway: String) {
+        Logger.log("onGatewayResolved:$gateway")
         socket = null
         cb?.invoke(gateway)
         cb = null
     }
 
     fun requestGateway(cb: (String) -> Unit) {
-        this.cb = cb
+        Udp.cb = cb
+        if (socket != null) {
+            return
+        }
+        val timer = Timer()
+        timer.schedule(object : TimerTask() {
+            override fun run() {
+                Logger.log("requestGateway超时")
+                socket?.close()
+            }
+        }, 5000L)
         thread {
             val socket = DatagramSocket()
-            this.socket = socket
+            Udp.socket = socket
             val bytes = MSG_MSEARCH.toByteArray()
             val packet =
                 DatagramPacket(bytes, bytes.size, InetSocketAddress("239.255.255.250", 1900))
             try {
                 socket.send(packet)
+                Logger.log("发送udp包成功")
             } catch (e: Exception) {
+                Logger.log("发送udp包失败")
                 e.printStackTrace()
+                timer.cancel()
                 socket.close()
                 onGatewalResolved("")
                 return@thread
@@ -93,13 +105,18 @@ internal object Udp {
             val readPacket = DatagramPacket(ByteArray(10240), 10240)
             try {
                 socket.receive(readPacket)
+                Logger.log("接收udp包")
             } catch (e: Exception) {
+                Logger.log("接收udp包失败")
                 e.printStackTrace()
+                timer.cancel()
                 socket.close()
                 onGatewalResolved("")
                 return@thread
             }
+            timer.cancel()
             val content = readPacket.data.decodeToString(readPacket.offset, readPacket.length)
+            Logger.log(content)
             val headers = parseHeaders(content.split("\n"))
             val location = headers["location"]
             socket.close()

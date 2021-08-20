@@ -1,4 +1,4 @@
-package me.izzp.upnp.portmapping
+package com.github.zzp.upnp.portmapping
 
 import java.net.Inet4Address
 import java.net.NetworkInterface
