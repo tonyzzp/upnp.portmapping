@@ -1,6 +1,8 @@
 # upnp.portmapping
 upnp 端口映射 for android
 
+[![](https://jitpack.io/v/tonyzzp/upnp.portmapping.svg)](https://jitpack.io/#tonyzzp/upnp.portmapping)
+
 
 使用方式
 ```gradle
