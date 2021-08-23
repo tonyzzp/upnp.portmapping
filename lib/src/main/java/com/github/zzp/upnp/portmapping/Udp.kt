@@ -13,8 +13,10 @@ internal const val MSG_MSEARCH =
 
 internal object Udp {
 
+    private var timer: Timer? = null
     private var socket: DatagramSocket? = null
     private var cb: ((String) -> Unit)? = null
+    private var isProcessing = false
 
     private fun parseHeaders(lines: List<String>): Map<String, String> {
         val map = mutableMapOf<String, String>()
@@ -31,10 +33,8 @@ internal object Udp {
 
     private fun onUpnpResolved(upnpUrl: String) {
         Logger.log("onUpnpResolved:$upnpUrl")
-        socket = null
         val content = Http.get(upnpUrl)
         if (content == "") {
-            onGatewalResolved("")
             return
         }
         val doc =
@@ -68,21 +68,27 @@ internal object Udp {
 
     private fun onGatewalResolved(gateway: String) {
         Logger.log("onGatewayResolved:$gateway")
-        socket = null
+        closeSocket()
         cb?.invoke(gateway)
         cb = null
+        timer?.cancel()
+        timer = null
+        isProcessing = false
     }
 
     fun requestGateway(cb: (String) -> Unit) {
-        Udp.cb = cb
-        if (socket != null) {
+        if (isProcessing) {
             return
         }
-        val timer = Timer()
-        timer.schedule(object : TimerTask() {
+        isProcessing = true
+        Udp.cb = cb
+        timer = Timer()
+        timer?.schedule(object : TimerTask() {
             override fun run() {
                 Logger.log("requestGateway超时")
-                socket?.close()
+                timer?.cancel()
+                closeSocket()
+                onGatewalResolved("")
             }
         }, 5000L)
         thread {
@@ -97,36 +103,42 @@ internal object Udp {
             } catch (e: Exception) {
                 Logger.log("发送udp包失败")
                 e.printStackTrace()
-                timer.cancel()
-                socket.close()
+                timer?.cancel()
+                closeSocket()
                 onGatewalResolved("")
                 return@thread
             }
-            val readPacket = DatagramPacket(ByteArray(10240), 10240)
-            try {
-                socket.receive(readPacket)
-                Logger.log("接收udp包")
-            } catch (e: Exception) {
-                Logger.log("接收udp包失败")
-                e.printStackTrace()
-                timer.cancel()
-                socket.close()
-                onGatewalResolved("")
-                return@thread
+            while (!socket.isClosed) {
+                val readPacket = DatagramPacket(ByteArray(10240), 10240)
+                try {
+                    socket.receive(readPacket)
+                    Logger.log("接收udp包")
+                } catch (e: Exception) {
+                    Logger.log("接收udp包失败")
+                    e.printStackTrace()
+                    timer?.cancel()
+                    closeSocket()
+                    onGatewalResolved("")
+                    return@thread
+                }
+                val content = readPacket.data.decodeToString(readPacket.offset, readPacket.length)
+                Logger.log(content)
+                val headers = parseHeaders(content.split("\n"))
+                val location = headers["location"]
+                if (location != null) {
+                    onUpnpResolved(location)
+                }
             }
-            timer.cancel()
-            val content = readPacket.data.decodeToString(readPacket.offset, readPacket.length)
-            Logger.log(content)
-            val headers = parseHeaders(content.split("\n"))
-            val location = headers["location"]
-            socket.close()
-            onUpnpResolved(location ?: "")
         }
+    }
+
+    private fun closeSocket() {
+        socket?.close()
+        socket = null
     }
 
     fun cancel() {
         cb = null
-        socket?.close()
-        socket = null
+        closeSocket()
     }
 }
