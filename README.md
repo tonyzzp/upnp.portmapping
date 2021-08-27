@@ -16,7 +16,7 @@ allprojects {
 
 ```gradle
 dependencies {
-  implementation 'com.github.tonyzzp:upnp.portmapping:1.3'
+  implementation 'com.github.tonyzzp:upnp.portmapping:1.4'
 }
 ```
 

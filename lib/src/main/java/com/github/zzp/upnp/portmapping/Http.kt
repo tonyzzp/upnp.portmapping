@@ -22,6 +22,7 @@ internal object Http {
         (URL(url).openConnection() as HttpURLConnection).let { conn ->
             conn.requestMethod = "GET"
             val result = conn.inputStream.readBytes().decodeToString()
+            Logger.log(conn.responseCode)
             Logger.log(result)
             result
         }
@@ -50,6 +51,7 @@ internal object Http {
                 conn.errorStream
             }
             val result = stream.readBytes().decodeToString()
+            Logger.log(conn.responseCode)
             Logger.log(result)
             Response(code, result)
         }

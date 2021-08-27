@@ -5,7 +5,6 @@ import android.view.Menu
 import android.view.MenuItem
 import android.view.View
 import android.widget.TextView
-import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import com.github.zzp.upnp.portmapping.PortMapping
 import com.github.zzp.upnp.portmapping.Upnp
@@ -41,10 +40,11 @@ class MainActivity : AppCompatActivity() {
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         when (item.itemId) {
             R.id.mi_log -> {
-                AlertDialog.Builder(this)
-                    .setMessage(Upnp.logs())
-                    .setPositiveButton("ok", null)
-                    .show()
+                alert(Upnp.logs(),
+                    "ok", null,
+                    "clear", {
+                        Upnp.clearLog()
+                    })
                 return true
             }
         }

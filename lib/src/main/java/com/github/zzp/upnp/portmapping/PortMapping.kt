@@ -1,8 +1,25 @@
 package com.github.zzp.upnp.portmapping
 
 import org.w3c.dom.Element
+import org.w3c.dom.Node
 import javax.xml.parsers.DocumentBuilderFactory
 import kotlin.concurrent.thread
+
+
+val NODE_TYPES = mapOf(
+    Node.ELEMENT_NODE to "ELEMENT_NODE",
+    Node.ATTRIBUTE_NODE to "ATTRIBUTE_NODE",
+    Node.TEXT_NODE to "TEXT_NODE",
+    Node.CDATA_SECTION_NODE to "CDATA_SECTION_NODE",
+    Node.ENTITY_REFERENCE_NODE to "ENTITY_REFERENCE_NODE",
+    Node.ENTITY_NODE to "ENTITY_NODE",
+    Node.PROCESSING_INSTRUCTION_NODE to "PROCESSING_INSTRUCTION_NODE",
+    Node.COMMENT_NODE to "COMMENT_NODE",
+    Node.DOCUMENT_NODE to "DOCUMENT_NODE",
+    Node.DOCUMENT_TYPE_NODE to "DOCUMENT_TYPE_NODE",
+    Node.DOCUMENT_FRAGMENT_NODE to "DOCUMENT_FRAGMENT_NODE",
+    Node.NOTATION_NODE to "NOTATION_NODE",
+)
 
 object PortMapping {
 
@@ -54,7 +71,9 @@ object PortMapping {
                                 params["NewInternalClient"] ?: "",
                                 params["NewInternalPort"]?.toInt() ?: 0,
                                 "",
-                                externalPort, protocol, params["NewPortMappingDescription"] ?: ""
+                                externalPort,
+                                protocol,
+                                params["NewPortMappingDescription"] ?: ""
                             )
                         )
                     }
@@ -112,31 +131,23 @@ object PortMapping {
             thread {
                 val response = Http.sendUPNPRequest(
                     Upnp.gateway, "DeletePortMapping", mapOf(
-                        "NewRemoteHost" to "0",
+                        "NewRemoteHost" to "",
                         "NewExternalPort" to externalPort.toString(),
                         "NewProtocol" to protocol,
                     )
                 )
-                cb(response.code == 200)
+                cb(response.code == 200 || response.code == 500)
             }
         }
     }
 
     private fun resolveResult(content: String): Map<String, String> {
-        val rtn = mutableMapOf<String, String>()
-        val doc = DocumentBuilderFactory.newInstance().newDocumentBuilder()
+        return DocumentBuilderFactory.newInstance().newDocumentBuilder()
             .parse(content.byteInputStream())?.documentElement
-        val body = doc?.getElementsByTagName("s:Body")?.item(0) as Element?
-        val nodes = body?.firstChild?.childNodes
-        return if (nodes != null) {
-            for (i in 0 until nodes.length) {
-                val node = nodes.item(i)
-                rtn[node.nodeName] = node.textContent
-            }
-            rtn
-        } else {
-            mapOf()
-        }
+            ?.getElementByTagName("s:Body")
+            ?.childNodes?.asIterable()?.find { it is Element }
+            ?.childNodes?.asIterable()?.filterIsInstance<Element>()
+            ?.map { it.tagName to it.textContent }?.toMap() ?: mapOf()
     }
 
     private fun init() {
